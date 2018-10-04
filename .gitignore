@@ -1,0 +1,35 @@
+#maven ignore
+target/
+*.tar.gz
+*.jar
+*.zip
+*.tar
+*.war
+
+#idea ignore
+.idea/
+*.iml
+*.ipr
+*.iws
+
+#eclipse ignore
+.settings/
+.externalToolBuilders/
+.project
+.classpath
+
+#temp ignore
+*.log
+*.cache
+*.diff
+*.patch
+*.tmp
+
+#system ignore
+.DS_Store
+Thumbs.db
+/target
+/*.iml
+
+node_modules
+bower_components

@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <!-- import element CSS -->
+    <link rel="stylesheet" href="/css/index.css">
+
+</head>
+<body>
+<div id="app">
+    <el-button type="success" @click="download">下载</el-button>
+    <br> <br>
+    <form action="/poi/import" enctype="multipart/form-data" method="post">
+        <input type="file" @change="getFile($event)"><br/>
+        <el-button type="success" @click="submit($event)">上传</el-button>
+    </form>
+
+    <el-dialog :visible.sync="visible" title="Hello world">
+        <p>Try Element</p>
+    </el-dialog>
+    <br> <br>
+
+
+    <br><br>
+    <template>
+        <el-table
+                :data="user"
+                border
+                style="width: 100%">
+            <el-table-column
+                    fixed
+                    prop="id"
+                    label="编号"
+                    width="150">
+            </el-table-column>
+            <el-table-column
+                    prop="userName"
+                    label="姓名"
+                    width="120">
+            </el-table-column>
+            <el-table-column
+                    prop="age"
+                    label="年龄"
+                    width="120">
+            </el-table-column>
+            <el-table-column
+                    label="操作"
+                    width="100">
+                <template slot-scope="scope">
+                    <el-button @click="handleClick(scope.row)" type="text" size="small">查看</el-button>
+                    <el-button type="text" size="small">编辑</el-button>
+                </template>
+            </el-table-column>
+        </el-table>
+    </template>
+
+</div>
+</body>
+<!--vue.js-->
+<script src="/js/vue.min.js"></script>
+<script src="/js/jquery.min.js"></script>
+<script src="/js/vue-router.js"></script>
+<script src="/js/axios.min.js"></script>
+
+<!-- 引入Element组件库 -->
+<script src="/js/element.js"></script>
+<script src="/js/moment.min.js"></script>
+
+<!-- layer插件 -->
+<script src="/layer/layer.js"></script>
+
+
+
+<script>
+
+    new Vue({
+        el: '#app',
+        data: function() {
+            return {
+                visible: false,
+                user: [],
+                file:''
+            }
+        },
+        mounted: function(){
+            //不要用ajax,以下无效，返回结果res不同
+            var _this = this   //很重要！！
+            axios.get('/poi/data')
+                .then(function (res) {
+                    _this.user = res.data
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        },
+        methods: {
+            download: function () {
+                window.location.href = "/poi/export";
+            },
+            handleClick(row){
+                console.log(row);
+            },
+            getFile(event) {
+                this.file = event.target.files[0];
+            },
+            submit(event){
+                event.preventDefault();//取消默认行为
+                var formData = new FormData();
+                formData.append('file', this.file);
+                console.log(formData.get("file"));
+                var config = {
+                    headers: {
+                        'Content-Type': 'multipart/form-data'
+                    }
+                }
+                var index = null;
+                //添加请求拦截器
+                axios.interceptors.request.use(function (config) {
+                    console.log("***");
+                    index = layer.load();
+                    return config;
+                }, function (error) {
+                    return Promise.reject(error);
+                });
+
+                //添加响应拦截器
+                axios.interceptors.response.use(function (res) {
+                    layer.close(index);
+                    return res;
+                },function (error) {
+                    return Promise.reject(error);
+                });
+                axios.post("/poi/import", formData, config)
+                    .then(function (res) {
+                        var html = '';
+                        html+="总共导入"+res.data.totalNum+"条，成功条数:"+res.data.successNum+"，失败条数:"+ res.data.failureNum;
+                        if (res.data.msg != ''){
+                            html+="<hr>失败原因:"+ res.data.msg;
+                        }
+                        layer.open({
+                            type: 1,
+                            title: false,
+                            closeBtn: 0,
+                            skin: 'layui-layer-nobg',
+                            shadeClose: true,
+                            content: html
+                        });
+                    })
+                    .catch(function (resp) {
+                        console.log(resp);
+                    });
+            },
+        }
+    });
+</script>
+</html>
